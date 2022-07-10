@@ -3,6 +3,7 @@ from flask import Flask, request, jsonify, abort
 from sqlalchemy import exc
 import json
 from flask_cors import CORS
+import sys
 
 from .database.models import db_drop_and_create_all, setup_db, Drink
 from .auth.auth import AuthError, requires_auth
@@ -18,6 +19,15 @@ CORS(app)
 !! Running this funciton will add one
 '''
 # db_drop_and_create_all()
+
+
+@app.route("/")
+@requires_auth()
+def home(jwt):
+    return jsonify({
+        'message': "hello"
+    })
+
 
 # ROUTES
 '''
@@ -112,3 +122,4 @@ def unprocessable(error):
 @TODO implement error handler for AuthError
     error handler should conform to general task above
 '''
+print(sys.exc_info())
