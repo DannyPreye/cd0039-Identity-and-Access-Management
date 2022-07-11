@@ -1,5 +1,6 @@
 
 import os
+from pickle import TRUE
 from turtle import title
 from unicodedata import name
 from flask import Flask, request, jsonify, abort
@@ -86,16 +87,19 @@ def get_drinks_details(payload):
 @requires_auth('post:drinks')
 def post_drinks(payload):
     body = request.get_json()
-    insert_drinks = Drink(
-        title=body['title'],
-        recipe=json.dumps(body['recipe'])
-    )
-    insert_drinks.insert()
-    get_drink = Drink.query.filter_by(title=body['title']).all()
-    drink = [drk.long() for drk in get_drink]
-    return jsonify(
-        {"success": True, "drinks": drink}
-    )
+    try:
+        insert_drinks = Drink(
+            title=body['title'],
+            recipe=json.dumps(body['recipe'])
+        )
+        insert_drinks.insert()
+        get_drink = Drink.query.filter_by(title=body['title']).all()
+        drink = [drk.long() for drk in get_drink]
+        return jsonify(
+            {"success": True, "drinks": drink}
+        )
+    except:
+        abort(400)
 
 
 '''
@@ -114,11 +118,20 @@ def post_drinks(payload):
 @app.route("/drinks/<id>", methods=['PATCH'])
 @requires_auth('patch:drinks')
 def patch_drinks(payload, id):
-    check = Drink().query.filter(Drink.id == id).one_or_none()
+    drink = Drink().query.filter(Drink.id == id).one_or_none()
     data = request.get_json()
-    print("Data from patch", data)
-    if check is None:
+
+    if drink is None:
         abort(404)
+    else:
+        drink.title = data['title']
+        drink.recipe = json.dumps(data['recipe'])
+        drink.update()
+        drnk = [dn.long() for dn in [drink]]
+        return jsonify({
+            'success': True,
+            'drinks': drnk
+        })
 
 
 '''
@@ -131,6 +144,18 @@ def patch_drinks(payload, id):
     returns status code 200 and json {"success": True, "delete": id} where id is the id of the deleted record
         or appropriate status code indicating reason for failure
 '''
+
+
+@app.route("/drinks/<id>", methods=['DELETE'])
+@requires_auth('delete:drinks')
+def delete_drinks(payload, id):
+    drink = Drink.query.filter(Drink.id == id).one_or_none()
+    data = request.get_json()
+    print("this iis data", data)
+    if drink is None:
+        abort(404)
+    else:
+        drink.delete()
 
 
 # Error Handling
