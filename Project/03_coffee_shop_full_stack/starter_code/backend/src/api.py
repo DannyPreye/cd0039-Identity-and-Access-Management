@@ -1,4 +1,7 @@
+
 import os
+from turtle import title
+from unicodedata import name
 from flask import Flask, request, jsonify, abort
 from sqlalchemy import exc
 import json
@@ -18,15 +21,7 @@ CORS(app)
 !! NOTE THIS MUST BE UNCOMMENTED ON FIRST RUN
 !! Running this funciton will add one
 '''
-# db_drop_and_create_all()
-
-
-@app.route("/")
-@requires_auth()
-def home(jwt):
-    return jsonify({
-        'message': "hello"
-    })
+db_drop_and_create_all()
 
 
 # ROUTES
@@ -40,6 +35,19 @@ def home(jwt):
 '''
 
 
+@app.route("/drinks")
+@requires_auth('get:drinks')
+def get_drinks(payload):
+    drinks = Drink().query.all()
+    dir = [drink.short() for drink in drinks]
+
+    return jsonify({
+        'success': True,
+        'drinks': dir,
+        'status': 200
+    })
+
+
 '''
 @TODO implement endpoint
     GET /drinks-detail
@@ -48,6 +56,19 @@ def home(jwt):
     returns status code 200 and json {"success": True, "drinks": drinks} where drinks is the list of drinks
         or appropriate status code indicating reason for failure
 '''
+
+
+@app.route("/drinks-detail")
+@requires_auth('get:drinks-detail')
+def get_drinks_details(payload):
+    get_drinks = Drink().query.all()
+    drinks = [drink.long() for drink in get_drinks]
+
+    return jsonify({
+        'success': True,
+        'drinks': drinks,
+        'status': 200
+    })
 
 
 '''
@@ -59,6 +80,22 @@ def home(jwt):
     returns status code 200 and json {"success": True, "drinks": drink} where drink an array containing only the newly created drink
         or appropriate status code indicating reason for failure
 '''
+
+
+@app.route("/drinks", methods=['Post'])
+@requires_auth('post:drinks')
+def post_drinks(payload):
+    body = request.get_json()
+    insert_drinks = Drink(
+        title=body['title'],
+        recipe=json.dumps(body['recipe'])
+    )
+    insert_drinks.insert()
+    get_drink = Drink.query.filter_by(title=body['title']).all()
+    drink = [drk.long() for drk in get_drink]
+    return jsonify(
+        {"success": True, "drinks": drink}
+    )
 
 
 '''
