@@ -111,6 +111,16 @@ def post_drinks(payload):
 '''
 
 
+@app.route("/drinks/<id>", methods=['PATCH'])
+@requires_auth('patch:drinks')
+def patch_drinks(payload, id):
+    check = Drink().query.filter(Drink.id == id).one_or_none()
+    data = request.get_json()
+    print("Data from patch", data)
+    if check is None:
+        abort(404)
+
+
 '''
 @TODO implement endpoint
     DELETE /drinks/<id>
